@@ -19,12 +19,11 @@ namespace BookmarkManager.Tests.Support
             var builder = WebHost.CreateDefaultBuilder()
                 .ConfigureTestServices(services =>
                 {
-                    var descriptor = services
-                        .Single(x => x.ServiceType == typeof(DbContextOptions<BookmarkManagerContext>));
-                    services.Remove(descriptor);
-                    descriptor = services
-                        .Single(x => x.ServiceType == typeof(BookmarkManagerContext));
-                    services.Remove(descriptor);
+                    var descriptors = services
+                        .Where(x => x.ServiceType == typeof(BookmarkManagerContext)
+                                 || x.ServiceType == typeof(DbContextOptions<BookmarkManagerContext>));
+                    foreach (var descriptor in descriptors.ToList())
+                        services.Remove(descriptor);
                     services
                         .AddDbContext<BookmarkManagerContext>(
                             options =>
