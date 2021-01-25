@@ -9,7 +9,7 @@ services:
     ports:
       - "1433:1433"
 
-  rabbit:
+  queue:
     image: "rabbitmq:3-management"
     hostname: "rabbit"
     environment:

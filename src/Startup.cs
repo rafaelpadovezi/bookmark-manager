@@ -1,4 +1,5 @@
 using BookmarkManager.Infrastructure;
+using BookmarkManager.Infrastructure.Queue;
 using BookmarkManager.Services;
 using BookmarkManager.Utils;
 using FluentValidation.AspNetCore;
@@ -31,10 +32,12 @@ namespace BookmarkerManager
                     options.Filters.Add(new ModelStateFilter()))
                 .AddFluentValidation(options =>
                     options.RegisterValidatorsFromAssemblyContaining<Startup>());
-            // db
+            // infra
             services
                 .AddDbContext<BookmarkManagerContext>(options =>
-                    options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")));
+                    options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
+                .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
+                .AddScoped<IBookmarkInsertedQueue, BookmarkInsertedQueue>();
             // application core
             services
                 .AddScoped<IBookmarkService, BookmarkService>();
