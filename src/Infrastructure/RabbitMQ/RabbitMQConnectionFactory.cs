@@ -9,6 +9,7 @@ namespace BookmarkManager.Infrastructure
         private readonly ConnectionFactory _factory;
         private bool _disposedValue;
 
+        // https://www.rabbitmq.com/dotnet-api-guide.html#connection-and-channel-lifspan
         internal Lazy<IConnection> Connection => new Lazy<IConnection>(() => _factory.CreateConnection());
 
         public RabbitMQConnectionFactory(IOptions<RabbitMQOptions> options)
