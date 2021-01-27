@@ -1,6 +1,7 @@
 ﻿using BookmarkManager.Infrastructure;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System.Text;
 using System.Threading;
@@ -10,6 +11,7 @@ namespace BookmarkManager.Consumers
 {
     public class BookmarkInsertedConsumer : BackgroundService
     {
+        private const string _queue = "bookmark_inserted";
         private readonly RabbitMQConnectionFactory _rabbitMQConnectionFactory;
         private readonly ILogger<RabbitMQConnectionFactory> _logger;
 
@@ -21,15 +23,18 @@ namespace BookmarkManager.Consumers
             _logger = logger;
         }
 
-        public void Subscribe()
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             var connection = _rabbitMQConnectionFactory.Connection.Value;
             using var channel = connection.CreateModel();
-            channel.QueueDeclare(queue: "bookmark_inserted",
+            
+            channel.QueueDeclare(queue: _queue,
                                  durable: false,
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
+
+            channel.BasicQos(0, 1, false);
 
             var consumer = new EventingBasicConsumer(channel);
 
@@ -42,11 +47,15 @@ namespace BookmarkManager.Consumers
 
                 channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
             };
-        }
 
-        protected override Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            throw new System.NotImplementedException();
+            channel.BasicConsume(queue: _queue,
+                                 autoAck: false,
+                                 consumer: consumer);
+
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                await Task.Delay(100, stoppingToken);
+            }
         }
     }
 }

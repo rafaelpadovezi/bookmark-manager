@@ -18,7 +18,10 @@ namespace BookmarkManager.Infrastructure
             {
                 HostName = options.Value.HostName,
                 UserName = options.Value.UserName,
-                Password = options.Value.Password
+                Password = options.Value.Password,
+                Port = options.Value.Port,
+                VirtualHost = options.Value.VHost,
+                AutomaticRecoveryEnabled = options.Value.AutomaticRecoveryEnabled
             };
         }
 

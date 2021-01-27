@@ -30,7 +30,7 @@ namespace BookmarkerManager
                     CreateHostBuilder(args).Build().Run();
                     break;
                 case "bookmark-inserted-consumer":
-                    CreateConsumer(args).Build.Run();
+                    CreateConsumer(args).Build().Run();
                     break;
                 default:
                     throw new ArgumentException("Argument must be valid");
@@ -49,7 +49,7 @@ namespace BookmarkerManager
                 .ConfigureServices(services =>
                 {
                     services
-                        .AddRabbitMQConnection(Configuration)
+                        .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
                         .AddHostedService<BookmarkInsertedConsumer>();
                 });
     }
