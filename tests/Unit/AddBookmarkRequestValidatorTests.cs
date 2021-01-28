@@ -1,17 +1,12 @@
 ﻿using BookmarkManager.Dtos;
 using BookmarkManager.Dtos.Validations;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace BookmarkManager.Tests.Unit
 {
     public class AddBookmarkRequestValidatorTests
     {
-        AddBookmarkRequestValidator validator = new AddBookmarkRequestValidator();
+        AddBookmarkRequestValidator _validator = new AddBookmarkRequestValidator();
 
         [Theory(DisplayName = "Should be valid")]
         [InlineData("https://excalidraw.com/")]
@@ -19,7 +14,7 @@ namespace BookmarkManager.Tests.Unit
         public void ShouldBeValid(string url)
         {
             var request = new AddBookmarkRequest { Url = url };
-            Assert.True(validator.Validate(request).IsValid);
+            Assert.True(_validator.Validate(request).IsValid);
         }
 
         [Theory(DisplayName = "Should be invalid")]
@@ -29,7 +24,7 @@ namespace BookmarkManager.Tests.Unit
         public void ShouldBeInvalid(string url)
         {
             var request = new AddBookmarkRequest { Url = url };
-            Assert.False(validator.Validate(request).IsValid);
+            Assert.False(_validator.Validate(request).IsValid);
         }
     }
 }

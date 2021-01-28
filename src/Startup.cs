@@ -61,6 +61,15 @@ namespace BookmarkerManager
 
                 endpoints.MapControllers();
             });
+
+            EnsureDbCreated(app);
+        }
+
+        private static void EnsureDbCreated(IApplicationBuilder app)
+        {
+            using var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
+            using var context = serviceScope.ServiceProvider.GetService<BookmarkManagerContext>();
+            context.Database.EnsureCreated();
         }
     }
 }

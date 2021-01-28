@@ -13,10 +13,18 @@ namespace BookmarkManager.Models
             DisplayName = Url;
         }
 
-        public string DisplayName { get; init; }
-        public string Url { get; init; }
-        public string Description { get; init; }
-        public string ImageUrl { get; init; }
-        public string Title { get; init; }
+        public string DisplayName { get; set; }
+        public string Url { get; set; }
+        public string Description { get; set; }
+        public string ImageUrl { get; set; }
+        public string Title { get; set; }
+
+        internal void Update(string title, string description, string imageUrl)
+        {
+            Title = title ?? Url;
+            DisplayName = Title;
+            Description = description;
+            ImageUrl = imageUrl;
+        }
     }
 }

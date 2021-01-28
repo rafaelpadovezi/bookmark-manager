@@ -10,6 +10,7 @@
   "profiles": {
     "BookmarkerManager": {
       "commandName": "Project",
+      "commandLineArgs": "bookmark-inserted-consumer",
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"

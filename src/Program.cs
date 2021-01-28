@@ -1,15 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 using BookmarkManager.Consumers;
+using BookmarkManager.Infrastructure;
 using BookmarkManager.Infrastructure.Queue;
+using BookmarkManager.Services;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
 
 namespace BookmarkerManager
 {
@@ -49,6 +48,10 @@ namespace BookmarkerManager
                 .ConfigureServices(services =>
                 {
                     services
+                        .AddHttpClient()
+                        .AddScoped<IWebpageService, WebpageService>()
+                        .AddDbContext<BookmarkManagerContext>(options =>
+                            options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
                         .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
                         .AddHostedService<BookmarkInsertedConsumer>();
                 });
