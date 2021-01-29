@@ -1,6 +1,6 @@
 # Bookmark Manager
 
-A simple bookmark manager written in `aspnet core 5`
+A simple bookmark manager written in C#
 
 ## Technologies
 
@@ -8,6 +8,10 @@ A simple bookmark manager written in `aspnet core 5`
 - `sql server`
 - `ef core 5`
 - `rabbit mq`
+
+## Architecture
+
+![architecure](./docs/architecture.png)
 
 ## Running locally
 
