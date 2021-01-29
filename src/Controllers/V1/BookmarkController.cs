@@ -26,11 +26,14 @@ namespace BookmarkManager.Controllers.V1
         }
 
         [HttpGet]
-        public async Task<PagedResult<Bookmark>> Get(string content, int page, int pageSize)
+        public async Task<PagedResult<Bookmark>> Get(string content = "", int page = 1, int pageSize = 10)
         {
-            var query = _context.Bookmarks.Where(x => x.DisplayName.Contains(content));
+            var query = _context.Bookmarks.AsQueryable();
+            if (!string.IsNullOrEmpty(content))
+                query = query.Where(x => x.DisplayName.ToLower().Contains(content.ToLower()));
             var count = await query.CountAsync();
             var items = await query
+                .OrderBy(x => x.DisplayName)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();

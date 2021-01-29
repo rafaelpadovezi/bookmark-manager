@@ -48,12 +48,15 @@ namespace BookmarkerManager
                 .ConfigureServices(services =>
                 {
                     services
-                        .AddHttpClient()
+                        // application core
                         .AddScoped<IWebpageService, WebpageService>()
+                        .AddHostedService<BookmarkInsertedConsumer>()
+                        // infra
+                        .AddHttpClient()
                         .AddDbContext<BookmarkManagerContext>(options =>
                             options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
                         .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
-                        .AddHostedService<BookmarkInsertedConsumer>();
+                        .AddScoped<IBookmarkInsertedQueue, BookmarkInsertedQueue>();
                 });
     }
 }
