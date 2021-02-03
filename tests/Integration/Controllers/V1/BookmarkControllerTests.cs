@@ -15,7 +15,7 @@ namespace BookmarkManager.Tests.Integration.Controllers.V1
         public async Task GetBookmarkAsync_ShoudReturnNotFoundIfBookmarDoesNotExit()
         {
             // arrange
-            var id = Guid.NewGuid();
+            var id = Guid.Parse("0f899b5d-eb91-4b6a-8aa1-149fee29cc30");
 
             // act
             var result = await Client.GetAsync($"api/v1/bookmarks/{id}");
@@ -51,6 +51,19 @@ namespace BookmarkManager.Tests.Integration.Controllers.V1
 
             // act
             var result = await Client.PostAsJsonAsync($"api/v1/bookmarks", request);
+
+            // assert
+            Assert.Equal(HttpStatusCode.Created, result.StatusCode);
+        }
+
+        [Fact(DisplayName = "Should add bookmark with transaction")]
+        public async Task AddBookmarkAsync_ShoudAddWithTransactionBookmark()
+        {
+            // arrange
+            var request = new AddBookmarkRequest { Url = "http://www.google.com" };
+
+            // act
+            var result = await Client.PostAsJsonAsync($"api/v1/bookmarks/transaction", request);
 
             // assert
             Assert.Equal(HttpStatusCode.Created, result.StatusCode);

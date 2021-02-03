@@ -17,6 +17,7 @@ namespace BookmarkManager.Tests.Support
         public WebhostFixture()
         {
             var builder = WebHost.CreateDefaultBuilder()
+                .UseEnvironment("Testing")
                 .ConfigureTestServices(services =>
                 {
                     var descriptors = services
@@ -39,6 +40,7 @@ namespace BookmarkManager.Tests.Support
             DbContext = ServiceProvider.GetRequiredService<BookmarkManagerContext>();
 
             DbContext.Database.EnsureCreated();
+            DbContext.Database.BeginTransaction();
         }
 
         public HttpClient Client { get; }
@@ -47,7 +49,7 @@ namespace BookmarkManager.Tests.Support
 
         public void Dispose()
         {
-            DbContext.Database.EnsureDeleted();
+            DbContext.Database.RollbackTransaction();
         }
 
         private static string CreateConnectionStringWithUniqueDbName()

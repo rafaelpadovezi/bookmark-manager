@@ -26,6 +26,18 @@ namespace BookmarkManager.Services
         {
             var bookmark = new Bookmark(request.Url);
 
+            _context.Add(bookmark);
+            await _context.SaveChangesAsync();
+
+            _bookmarkInsertedQueue.Publish(bookmark);
+
+            return bookmark;
+        }
+
+        public async Task<Bookmark> AddBookmarkWithTransactionAsync(AddBookmarkRequest request)
+        {
+            var bookmark = new Bookmark(request.Url);
+
             using var transation = await _context.Database.BeginTransactionAsync();
 
             _context.Add(bookmark);

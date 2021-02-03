@@ -59,5 +59,13 @@ namespace BookmarkManager.Controllers.V1
 
             return CreatedAtAction(nameof(GetBookmark), new { addedBookmark.Id }, addedBookmark);
         }
+
+        [HttpPost("transaction")]
+        public async Task<ActionResult<Bookmark>> AddBookmarkWithTransaction([FromBody] AddBookmarkRequest request)
+        {
+            var addedBookmark = await _bookmarkService.AddBookmarkWithTransactionAsync(request);
+
+            return CreatedAtAction(nameof(GetBookmark), new { addedBookmark.Id }, addedBookmark);
+        }
     }
 }
