@@ -26,14 +26,13 @@ namespace BookmarkManager.Services
         {
             var bookmark = new Bookmark(request.Url);
 
-            using var transation = await _context.Database.BeginTransactionAsync();
+            await _bookmarkInsertedQueue.RunInTransaction(async () =>
+            {
+                _bookmarkInsertedQueue.Publish(bookmark);
 
-            _context.Add(bookmark);
-            await _context.SaveChangesAsync();
-
-            _bookmarkInsertedQueue.Publish(bookmark);
-
-            await transation.CommitAsync();
+                _context.Add(bookmark);
+                await _context.SaveChangesAsync();
+            });
 
             return bookmark;
         }

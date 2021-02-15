@@ -9,6 +9,7 @@ namespace BookmarkManager.Infrastructure
     public interface IBookmarkInsertedQueue : IDisposable
     {
         void Publish(Bookmark bookmark);
+        Task RunInTransaction(Func<Task> task);
         void Subscribe(Func<IModel, BasicDeliverEventArgs, Bookmark, Task> func);
     }
 }

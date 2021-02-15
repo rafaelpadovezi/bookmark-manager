@@ -17,6 +17,7 @@ namespace BookmarkManager.Tests.Support
         public WebhostFixture()
         {
             var builder = WebHost.CreateDefaultBuilder()
+                .UseEnvironment("Testing")
                 .ConfigureTestServices(services =>
                 {
                     var descriptors = services
