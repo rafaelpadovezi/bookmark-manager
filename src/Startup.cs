@@ -62,7 +62,8 @@ namespace BookmarkerManager
                 endpoints.MapControllers();
             });
 
-            EnsureDbCreated(app);
+            if (env.EnvironmentName != "Testing")
+                EnsureDbCreated(app);
         }
 
         private static void EnsureDbCreated(IApplicationBuilder app)

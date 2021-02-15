@@ -33,6 +33,23 @@ namespace BookmarkManager.Infrastructure
                                  arguments: null);
         }
 
+        public async Task RunInTransaction(Func<Task> task)
+        {
+            _channel.TxSelect();
+            try
+            {
+                await task();
+                _channel.TxCommit();
+                _logger.LogDebug("Broker tx commited");
+            }
+            catch
+            {
+                _logger.LogInformation("Broker tx is being rollbacked after exception");
+                _channel.TxRollback();
+                throw;
+            }
+        }
+
         public void Publish(Bookmark bookmark)
         {
             var message = new { bookmark.Id, bookmark.Url };
@@ -42,6 +59,7 @@ namespace BookmarkManager.Infrastructure
                                  routingKey: _queueName,
                                  basicProperties: null,
                                  body: body);
+
             _logger.LogInformation("Sent {message}", message);
         }
 
