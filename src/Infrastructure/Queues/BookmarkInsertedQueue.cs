@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 
 namespace BookmarkManager.Infrastructure
 {
-
     public sealed class BookmarkInsertedQueue : IQueue<BookmarkInserted>
     {
         private const string _queueName = "bookmark.inserted";
