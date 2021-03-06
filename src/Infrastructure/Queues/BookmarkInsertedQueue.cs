@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace BookmarkManager.Infrastructure
 {
 
-    public sealed class BookmarkInsertedQueue : IBookmarkInsertedQueue
+    public sealed class BookmarkInsertedQueue : IQueue<Bookmark>
     {
         private const string _queueName = "bookmark_inserted";
         private readonly RabbitMQConnectionFactory _rabbitMQConnectionFactory;
@@ -63,7 +63,7 @@ namespace BookmarkManager.Infrastructure
             _logger.LogInformation("Sent {message}", message);
         }
 
-        public void Subscribe(Func<IModel, BasicDeliverEventArgs, Bookmark, Task> func)
+        public void Subscribe(Func<Bookmark, Action, Task> func)
         {
             _channel.BasicQos(0, 1, false);
 
@@ -77,7 +77,8 @@ namespace BookmarkManager.Infrastructure
 
                 _logger.LogInformation("Receveid {@message}", bookmark);
 
-                await func(_channel, ea, bookmark);
+                Action ackAction = () => _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+                await func(bookmark, ackAction);
             };
 
             _channel.BasicConsume(queue: _queueName,

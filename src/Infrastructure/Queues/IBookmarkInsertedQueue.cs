@@ -1,15 +1,13 @@
 ﻿using BookmarkManager.Models;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using System;
 using System.Threading.Tasks;
 
 namespace BookmarkManager.Infrastructure
 {
-    public interface IBookmarkInsertedQueue : IDisposable
+    public interface IQueue<TMessage> : IDisposable
     {
-        void Publish(Bookmark bookmark);
+        void Publish(TMessage bookmark);
         Task RunInTransaction(Func<Task> task);
-        void Subscribe(Func<IModel, BasicDeliverEventArgs, Bookmark, Task> func);
+        void Subscribe(Func<Bookmark, Action, Task> func);
     }
 }

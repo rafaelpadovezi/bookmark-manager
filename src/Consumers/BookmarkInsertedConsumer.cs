@@ -1,63 +1,46 @@
 ﻿using BookmarkManager.Infrastructure;
+using BookmarkManager.Models;
 using BookmarkManager.Services;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace BookmarkManager.Consumers
 {
-    public class BookmarkInsertedConsumer : BackgroundService
+    public interface IConsumer<TMessage>
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly IBookmarkInsertedQueue _bookmarkInsertedQueue;
-        private readonly ILogger<RabbitMQConnectionFactory> _logger;
+        Task ExecuteAsync(TMessage message, Action ack);
+    }
+
+    public class BookmarkInsertedConsumer : IConsumer<Bookmark>
+    {
+        private readonly BookmarkManagerContext _context;
+        private readonly IWebpageService _webpageService;
 
         public BookmarkInsertedConsumer(
-            IServiceProvider services,
-            IBookmarkInsertedQueue bookmarkInsertedQueue,
-            ILogger<RabbitMQConnectionFactory> logger)
+            BookmarkManagerContext context,
+            IWebpageService webpageService,
+            ILogger<BookmarkInsertedConsumer> logger)
         {
-            _serviceProvider = services;
-            _bookmarkInsertedQueue = bookmarkInsertedQueue;
-            _logger = logger;
+            _context = context;
+            _webpageService = webpageService;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public async Task ExecuteAsync(Bookmark message, Action ack)
         {
-            _bookmarkInsertedQueue.Subscribe(async (channel, eventArgs, bookmark) =>
-            {
-                using var scope = _serviceProvider.CreateScope();
-                var (context, webpageService) = GetRequiredServices(scope);
+            var (title, description, imageUrl) = await _webpageService.GetPageInformation(bookmark.Url);
 
-                var (title, description, imageUrl) = await webpageService.GetPageInformation(bookmark.Url);
+            bookmark.Update(title, description, imageUrl);
 
-                bookmark.Update(title, description, imageUrl);
+            _context.Update(bookmark);
 
-                context.Update(bookmark);
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            await _context.SaveChangesAsync();
 
-                using var transaction = await context.Database.BeginTransactionAsync();
-                await context.SaveChangesAsync();
-
-                channel.BasicAck(deliveryTag: eventArgs.DeliveryTag, multiple: false);
-                await transaction.CommitAsync();
-            });
-
-            _logger.LogInformation("Subscribed to queue");
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await Task.Delay(100, stoppingToken);
-            }
-        }
-
-        private static (BookmarkManagerContext, IWebpageService) GetRequiredServices(IServiceScope scope)
-        {
-            return (
-                scope.ServiceProvider.GetRequiredService<BookmarkManagerContext>(),
-                scope.ServiceProvider.GetRequiredService<IWebpageService>());
+            ack();
+            await transaction.CommitAsync();
         }
     }
 }
