@@ -16,6 +16,7 @@ namespace BookmarkManager.Consumers
     {
         private readonly BookmarkManagerContext _context;
         private readonly IWebpageService _webpageService;
+        private readonly ILogger<BookmarkInsertedConsumer> _logger;
 
         public BookmarkInsertedConsumer(
             BookmarkManagerContext context,
@@ -24,6 +25,7 @@ namespace BookmarkManager.Consumers
         {
             _context = context;
             _webpageService = webpageService;
+            _logger = logger;
         }
 
         public async Task ExecuteAsync(BookmarkInserted message, Action ack)
@@ -31,6 +33,13 @@ namespace BookmarkManager.Consumers
             var (title, description, imageUrl) = await _webpageService.GetPageInformation(message.Url);
 
             var bookmark = await _context.Bookmarks.FindAsync(message.Id);
+            if (bookmark is null)
+            {
+                _logger.LogWarning("Could not find bookmark with id {id}", message.Id);
+                ack();
+                return;
+            }
+
             bookmark.Update(title, description, imageUrl);
 
             _context.Update(bookmark);

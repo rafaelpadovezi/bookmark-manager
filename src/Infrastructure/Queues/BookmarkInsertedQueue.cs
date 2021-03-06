@@ -78,13 +78,14 @@ namespace BookmarkManager.Infrastructure
 
                 _logger.LogInformation("Receveid {@message}", bookmark);
 
-                Action ackAction = () => _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+                void ackAction() => _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
                 try
                 {
                     await func(bookmark, ackAction);
                 }
                 catch (Exception ex)
                 {
+                    _channel.BasicReject(deliveryTag: ea.DeliveryTag, requeue: false);
                     _logger.LogError(ex, "Error processing message");
                     throw;
                 }

@@ -26,7 +26,6 @@ namespace BookmarkManager.Consumers
         {
             var bookmarkInsertedQueue = _serviceProvider.GetRequiredService<IQueue<BookmarkInserted>>();
 
-
             bookmarkInsertedQueue.Subscribe(async (message, ack) =>
             {
                 using var scope = _serviceProvider.CreateScope();
