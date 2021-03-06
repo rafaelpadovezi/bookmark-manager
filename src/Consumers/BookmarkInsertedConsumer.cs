@@ -1,9 +1,7 @@
-﻿using BookmarkManager.Infrastructure;
-using BookmarkManager.Models;
+﻿using BookmarkManager.Dtos;
+using BookmarkManager.Infrastructure;
 using BookmarkManager.Services;
 using Microsoft.Extensions.Logging;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
 using System;
 using System.Threading.Tasks;
 
@@ -14,7 +12,7 @@ namespace BookmarkManager.Consumers
         Task ExecuteAsync(TMessage message, Action ack);
     }
 
-    public class BookmarkInsertedConsumer : IConsumer<Bookmark>
+    public class BookmarkInsertedConsumer : IConsumer<BookmarkInserted>
     {
         private readonly BookmarkManagerContext _context;
         private readonly IWebpageService _webpageService;
@@ -28,10 +26,11 @@ namespace BookmarkManager.Consumers
             _webpageService = webpageService;
         }
 
-        public async Task ExecuteAsync(Bookmark message, Action ack)
+        public async Task ExecuteAsync(BookmarkInserted message, Action ack)
         {
-            var (title, description, imageUrl) = await _webpageService.GetPageInformation(bookmark.Url);
+            var (title, description, imageUrl) = await _webpageService.GetPageInformation(message.Url);
 
+            var bookmark = await _context.Bookmarks.FindAsync(message.Id);
             bookmark.Update(title, description, imageUrl);
 
             _context.Update(bookmark);
