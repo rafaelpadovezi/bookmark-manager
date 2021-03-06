@@ -19,6 +19,9 @@ A simple bookmark manager written in C#
 # start dependencies
 docker-compose up -d db queue
 
+# see help
+dotnet run -- -h
+
 # run api
 dotnet run -- api
 
@@ -31,3 +34,4 @@ dotnet run -- bookmark-inserted-consumer
 - https://docs.microsoft.com/en-us/aspnet/core/tutorials/first-web-api?view=aspnetcore-5.0&tabs=visual-studio
 - https://medium.com/@sergiobarriel/how-to-automatically-validate-a-model-with-mvc-filter-and-fluent-validation-package-ae51098bcf5b
 - https://www.rabbitmq.com/dotnet-api-guide.html#connection-and-channel-lifspan
+- https://github.com/Tyrrrz/CliFx?utm_source=csharp&utm_medium=email&utm_campaign=digest#quick-start
