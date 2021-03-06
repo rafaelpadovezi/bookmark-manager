@@ -7,11 +7,6 @@ using System.Threading.Tasks;
 
 namespace BookmarkManager.Consumers
 {
-    public interface IConsumer<TMessage>
-    {
-        Task ExecuteAsync(TMessage message, Action ack);
-    }
-
     public class BookmarkInsertedConsumer : IConsumer<BookmarkInserted>
     {
         private readonly BookmarkManagerContext _context;
