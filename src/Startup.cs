@@ -36,7 +36,7 @@ namespace BookmarkerManager
                 .AddDbContext<BookmarkManagerContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
                 .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
-                .AddScoped<IBookmarkInsertedQueue, BookmarkInsertedQueue>();
+                .AddScoped<IQueue<Bookmark>, BookmarkInsertedQueue>();
             // application core
             services
                 .AddScoped<IBookmarkService, BookmarkService>();
