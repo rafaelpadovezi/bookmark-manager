@@ -8,6 +8,6 @@ namespace BookmarkManager.Infrastructure
     {
         void Publish(TMessage bookmark);
         Task RunInTransaction(Func<Task> task);
-        void Subscribe(Func<Bookmark, Action, Task> func);
+        void Subscribe(Func<TMessage, Action, Task> func);
     }
 }

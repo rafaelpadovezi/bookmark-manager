@@ -1,6 +1,8 @@
 using BookmarkManager.Consumers;
+using BookmarkManager.Dtos;
 using BookmarkManager.Infrastructure;
 using BookmarkManager.Infrastructure.Queue;
+using BookmarkManager.Models;
 using BookmarkManager.Services;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -50,13 +52,14 @@ namespace BookmarkerManager
                     services
                         // application core
                         .AddScoped<IWebpageService, WebpageService>()
-                        .AddHostedService<ConsumerService>()
+                        .AddScoped<IConsumer<BookmarkInserted>, BookmarkInsertedConsumer>()
                         // infra
                         .AddHttpClient()
+                        .AddHostedService<ConsumerService>()
                         .AddDbContext<BookmarkManagerContext>(options =>
                             options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
                         .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
-                        .AddScoped<IQueue<Bookmark>, BookmarkInsertedQueue>();
+                        .AddScoped<IQueue<BookmarkInserted>, BookmarkInsertedQueue>();
                 });
     }
 }

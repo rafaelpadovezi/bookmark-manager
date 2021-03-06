@@ -1,6 +1,5 @@
-﻿using BookmarkManager.Infrastructure;
-using BookmarkManager.Models;
-using BookmarkManager.Services;
+﻿using BookmarkManager.Dtos;
+using BookmarkManager.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -25,17 +24,15 @@ namespace BookmarkManager.Consumers
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var queues = _serviceProvider.GetServices<IQueue<>>();
+            var bookmarkInsertedQueue = _serviceProvider.GetRequiredService<IQueue<BookmarkInserted>>();
 
-            foreach (var queue in queues)
+
+            bookmarkInsertedQueue.Subscribe(async (message, ack) =>
             {
-                queue.Subscribe(async (message, ack) =>
-                {
-                    using var scope = _serviceProvider.CreateScope();
-                    var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<Bookmark>>();
-                    await consumer.ExecuteAsync(message, ack);
-                });
-            }
+                using var scope = _serviceProvider.CreateScope();
+                var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<BookmarkInserted>>();
+                await consumer.ExecuteAsync(message, ack);
+            });
 
             _logger.LogInformation("Subscribed to queue");
 
@@ -43,13 +40,6 @@ namespace BookmarkManager.Consumers
             {
                 await Task.Delay(100, stoppingToken);
             }
-        }
-
-        private static (BookmarkManagerContext, IWebpageService) GetRequiredServices(IServiceScope scope)
-        {
-            return (
-                scope.ServiceProvider.GetRequiredService<BookmarkManagerContext>(),
-                scope.ServiceProvider.GetRequiredService<IWebpageService>());
         }
     }
 }
