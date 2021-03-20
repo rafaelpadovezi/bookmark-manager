@@ -35,3 +35,4 @@ dotnet run -- bookmark-inserted-consumer
 - https://medium.com/@sergiobarriel/how-to-automatically-validate-a-model-with-mvc-filter-and-fluent-validation-package-ae51098bcf5b
 - https://www.rabbitmq.com/dotnet-api-guide.html#connection-and-channel-lifspan
 - https://github.com/Tyrrrz/CliFx?utm_source=csharp&utm_medium=email&utm_campaign=digest#quick-start
+- https://devblogs.microsoft.com/aspnet/improvements-in-net-core-3-0-for-troubleshooting-and-monitoring-distributed-apps/
