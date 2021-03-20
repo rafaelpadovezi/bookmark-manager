@@ -2,7 +2,9 @@ using BookmarkManager.Consumers;
 using BookmarkManager.Dtos;
 using BookmarkManager.Infrastructure;
 using BookmarkManager.Infrastructure.Queue;
+using BookmarkManager.Infrastructure.Queues;
 using BookmarkManager.Services;
+using BookmarkManager.Utils;
 using CliFx;
 using CliFx.Attributes;
 using Microsoft.AspNetCore.Hosting;
@@ -10,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -43,6 +46,13 @@ namespace BookmarkerManager
 
             public static IHostBuilder CreateHostBuilder(string[] args) =>
                 Host.CreateDefaultBuilder(args)
+                    .ConfigureLogging(builder =>
+                    {
+                        builder.AddSimpleConsole(options =>
+                        {
+                            options.IncludeScopes = true;
+                        });
+                    })
                     .ConfigureWebHostDefaults(webBuilder =>
                     {
                         webBuilder.UseStartup<Startup>();
@@ -59,6 +69,13 @@ namespace BookmarkerManager
 
             public static IHostBuilder CreateConsumer(string[] args) =>
                 Host.CreateDefaultBuilder(args)
+                    .ConfigureLogging(builder =>
+                    {
+                        builder.AddSimpleConsole(options =>
+                        {
+                            options.IncludeScopes = true;
+                        });
+                    })
                     .ConfigureServices(services =>
                     {
                         services
@@ -71,7 +88,7 @@ namespace BookmarkerManager
                             .AddDbContext<BookmarkManagerContext>(options =>
                                 options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
                             .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
-                            .AddScoped<IQueue<BookmarkInserted>, BookmarkInsertedQueue>();
+                            .AddQueue<BookmarkInserted>("bookmark.inserted");
                     });
         }
     }

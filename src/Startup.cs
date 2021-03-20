@@ -1,6 +1,7 @@
 using BookmarkManager.Dtos;
 using BookmarkManager.Infrastructure;
 using BookmarkManager.Infrastructure.Queue;
+using BookmarkManager.Infrastructure.Queues;
 using BookmarkManager.Services;
 using BookmarkManager.Utils;
 using FluentValidation.AspNetCore;
@@ -37,7 +38,7 @@ namespace BookmarkerManager
                 .AddDbContext<BookmarkManagerContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
                 .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
-                .AddScoped<IQueue<BookmarkInserted>, BookmarkInsertedQueue>();
+                .AddQueue<BookmarkInserted>("bookmark.inserted");
             // application core
             services
                 .AddScoped<IBookmarkService, BookmarkService>();

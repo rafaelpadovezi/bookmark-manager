@@ -1,28 +1,32 @@
-﻿using BookmarkManager.Dtos;
-using BookmarkManager.Models;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Constants = BookmarkManager.Utils.Constants;
 
 namespace BookmarkManager.Infrastructure
 {
-    public sealed class BookmarkInsertedQueue : IQueue<BookmarkInserted>
+    public class Queue<T> : IQueue<T>
     {
-        private const string _queueName = "bookmark.inserted";
+        private readonly string _queueName;
         private readonly RabbitMQConnectionFactory _rabbitMQConnectionFactory;
-        private readonly ILogger<BookmarkInsertedQueue> _logger;
+        private readonly ILogger<Queue<T>> _logger;
         private readonly IModel _channel;
+        private bool _disposedValue;
 
-        public BookmarkInsertedQueue(
+        public Queue(
             RabbitMQConnectionFactory rabbitMQConnectionFactory,
-            ILogger<BookmarkInsertedQueue> logger)
+            ILogger<Queue<T>> logger,
+            string queueName)
         {
             _rabbitMQConnectionFactory = rabbitMQConnectionFactory;
             _logger = logger;
+            _queueName = queueName;
 
             var connection = _rabbitMQConnectionFactory.Connection.Value;
             _channel = connection.CreateModel();
@@ -44,26 +48,33 @@ namespace BookmarkManager.Infrastructure
             }
             catch
             {
-                _logger.LogInformation("Broker tx is being rollbacked after exception");
+                _logger.LogWarning("Broker tx is being rollbacked after exception");
                 _channel.TxRollback();
                 throw;
             }
         }
 
-        public void Publish(BookmarkInserted bookmark)
+        public void Publish(T message)
         {
-            var message = new { bookmark.Id, bookmark.Url };
             var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+
+            IBasicProperties props = _channel.CreateBasicProperties();
+            props.ContentType = "text/plain";
+            props.DeliveryMode = 2;
+            props.Headers = new Dictionary<string, object>
+            {
+                { "traceparent", Activity.Current.Id }
+            };
 
             _channel.BasicPublish(exchange: "",
                                  routingKey: _queueName,
-                                 basicProperties: null,
+                                 basicProperties: props,
                                  body: body);
 
             _logger.LogInformation("Sent {message}", message);
         }
 
-        public void Subscribe(Func<BookmarkInserted, Action, Task> func)
+        public void Subscribe(Func<T, Action, Task> func)
         {
             _channel.BasicQos(0, 1, false);
 
@@ -71,22 +82,28 @@ namespace BookmarkManager.Infrastructure
 
             consumer.Received += async (sender, ea) =>
             {
-                var body = ea.Body.ToArray();
-                var bookmark = JsonSerializer.Deserialize<BookmarkInserted>(
-                    Encoding.UTF8.GetString(body));
+                Activity activity = StartActivity(ea);
 
-                _logger.LogInformation("Receveid {@message}", bookmark);
+                var message = JsonSerializer.Deserialize<T>(
+                    Encoding.UTF8.GetString(ea.Body.ToArray()));
+
+                _logger.LogInformation("Received message from {queue}", _queueName);
 
                 void ackAction() => _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
+
                 try
                 {
-                    await func(bookmark, ackAction);
+                    await func(message, ackAction);
                 }
                 catch (Exception ex)
                 {
                     _channel.BasicReject(deliveryTag: ea.DeliveryTag, requeue: false);
                     _logger.LogError(ex, "Error processing message");
                     throw;
+                }
+                finally
+                {
+                    activity.Stop();
                 }
             };
 
@@ -95,9 +112,36 @@ namespace BookmarkManager.Infrastructure
                                  consumer: consumer);
         }
 
+        private Activity StartActivity(BasicDeliverEventArgs ea)
+        {
+            var activity = new Activity($"{_queueName}.Consumer");
+            if (ea.BasicProperties.Headers.TryGetValue(
+                Constants.TraceParentHeaderName, out var traceparent))
+            {
+                var traceparentString = Encoding.UTF8.GetString(traceparent as byte[]);
+                activity.SetParentId(traceparentString);
+            }
+            activity.Start();
+            return activity;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _channel?.Dispose();
+                }
+
+                _disposedValue = true;
+            }
+        }
+
         public void Dispose()
         {
-            _channel?.Dispose();
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

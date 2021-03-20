@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace BookmarkManager.Consumers
+namespace BookmarkManager.Utils
 {
     public interface IConsumer<TMessage>
     {
