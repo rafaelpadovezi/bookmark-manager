@@ -35,7 +35,7 @@ namespace BookmarkerManager
                 .Build()
                 .RunAsync();
         }
-        
+
         [Command("api")]
         public class FirstCommand : ICommand
         {
@@ -81,14 +81,14 @@ namespace BookmarkerManager
                         services
                             // application core
                             .AddScoped<IWebpageService, WebpageService>()
-                            .AddScoped<IConsumer<BookmarkInserted>, BookmarkInsertedConsumer>()
+                            .AddScoped<BookmarkInsertedConsumer>()
                             // infra
                             .AddHttpClient()
                             .AddHostedService<ConsumerService>()
                             .AddDbContext<BookmarkManagerContext>(options =>
                                 options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
                             .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
-                            .AddQueue<BookmarkInserted>("bookmark.inserted");
+                            .AddScoped<IQueueConsumer, QueueClient>();
                     });
         }
     }

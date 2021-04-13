@@ -9,12 +9,12 @@ namespace BookmarkManager.Services
     public class BookmarkService : IBookmarkService
     {
         private readonly BookmarkManagerContext _context;
-        private readonly IQueue<BookmarkInserted> _bookmarkInsertedQueue;
+        private readonly IQueueProducer _bookmarkInsertedQueue;
         private readonly ILogger<BookmarkService> _logger;
 
         public BookmarkService(
             BookmarkManagerContext context,
-            IQueue<BookmarkInserted> bookmarkInsertedQueue,
+            IQueueProducer bookmarkInsertedQueue,
             ILogger<BookmarkService> logger)
         {
             _context = context;
@@ -26,17 +26,18 @@ namespace BookmarkManager.Services
         {
             var bookmark = new Bookmark(request.Url);
 
-            await _bookmarkInsertedQueue.RunInTransaction(async () =>
-            {
-                _bookmarkInsertedQueue.Publish(new BookmarkInserted
-                {
-                    Url = bookmark.Url,
-                    Id = bookmark.Id
-                });
+            _context.Add(bookmark);
+            await _context.SaveChangesAsync();
 
-                _context.Add(bookmark);
-                await _context.SaveChangesAsync();
+            _logger.LogInformation("Bookmark {url} added", request.Url);
+
+            _bookmarkInsertedQueue.Publish("bookmark.inserted", new BookmarkInserted
+            {
+                Url = bookmark.Url,
+                Id = bookmark.Id
             });
+
+            _logger.LogInformation("Bookmark {url} sent to que", request.Url);
 
             return bookmark;
         }

@@ -1,45 +1,32 @@
-﻿using BookmarkManager.Dtos;
-using BookmarkManager.Infrastructure;
-using BookmarkManager.Utils;
-using Microsoft.Extensions.DependencyInjection;
+﻿using BookmarkManager.Infrastructure;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace BookmarkManager.Consumers
 {
-    public class ConsumerService : BackgroundService
+    public class ConsumerService : IHostedService
     {
-        private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger<ConsumerService> _logger;
+        private readonly IQueueConsumer _queueConsumer;
 
-        public ConsumerService(
-            IServiceProvider services,
-            ILogger<ConsumerService> logger)
+        public ConsumerService(IQueueConsumer queueConsumer)
         {
-            _serviceProvider = services;
-            _logger = logger;
+            _queueConsumer = queueConsumer;
         }
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        public Task StartAsync(CancellationToken cancellationToken)
         {
-            var bookmarkInsertedQueue = _serviceProvider.GetRequiredService<IQueue<BookmarkInserted>>();
+            _queueConsumer.Subscribe<BookmarkInsertedConsumer>(
+                "bookmark.inserted",
+                consumer => consumer.SaveBookmarDetailsAsync);
 
-            bookmarkInsertedQueue.Subscribe(async (message, ack) =>
-            {
-                using var scope = _serviceProvider.CreateScope();
-                var consumer = scope.ServiceProvider.GetRequiredService<IConsumer<BookmarkInserted>>();
-                await consumer.ExecuteAsync(message, ack);
-            });
+            return Task.CompletedTask;
+        }
 
-            _logger.LogInformation("Subscribed to queue");
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                await Task.Delay(100, stoppingToken);
-            }
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
     }
 }

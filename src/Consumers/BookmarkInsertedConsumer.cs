@@ -1,14 +1,12 @@
 ﻿using BookmarkManager.Dtos;
 using BookmarkManager.Infrastructure;
 using BookmarkManager.Services;
-using BookmarkManager.Utils;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Threading.Tasks;
 
 namespace BookmarkManager.Consumers
 {
-    public class BookmarkInsertedConsumer : IConsumer<BookmarkInserted>
+    public class BookmarkInsertedConsumer
     {
         private readonly BookmarkManagerContext _context;
         private readonly IWebpageService _webpageService;
@@ -24,26 +22,26 @@ namespace BookmarkManager.Consumers
             _logger = logger;
         }
 
-        public async Task ExecuteAsync(BookmarkInserted message, Action ack)
+        public async Task SaveBookmarDetailsAsync(Payload payload)
         {
+            var message = payload.Parse<BookmarkInserted>();
             var (title, description, imageUrl) = await _webpageService.GetPageInformation(message.Url);
 
             var bookmark = await _context.Bookmarks.FindAsync(message.Id);
             if (bookmark is null)
             {
                 _logger.LogWarning("Could not find bookmark with id {id}", message.Id);
-                ack();
+                payload.Ack();
                 return;
             }
 
             bookmark.Update(title, description, imageUrl);
-
             _context.Update(bookmark);
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             await _context.SaveChangesAsync();
 
-            ack();
+            payload.Ack();
             await transaction.CommitAsync();
         }
     }

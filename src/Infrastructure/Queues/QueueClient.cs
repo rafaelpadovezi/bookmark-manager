@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
@@ -6,56 +7,40 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Constants = BookmarkManager.Utils.Constants;
 
 namespace BookmarkManager.Infrastructure
 {
-    public class Queue<T> : IQueue<T>
+    public class QueueClient : IQueueConsumer, IQueueProducer
     {
         private readonly string _queueName;
+        private readonly IServiceProvider _serviceProvider;
         private readonly RabbitMQConnectionFactory _rabbitMQConnectionFactory;
-        private readonly ILogger<Queue<T>> _logger;
+        private readonly ILogger<QueueClient> _logger;
         private readonly IModel _channel;
         private bool _disposedValue;
 
-        public Queue(
+        public QueueClient(
+            IServiceProvider serviceProvider,
             RabbitMQConnectionFactory rabbitMQConnectionFactory,
-            ILogger<Queue<T>> logger,
-            string queueName)
+            ILogger<QueueClient> logger)
         {
+            _serviceProvider = serviceProvider;
             _rabbitMQConnectionFactory = rabbitMQConnectionFactory;
             _logger = logger;
-            _queueName = queueName;
 
             var connection = _rabbitMQConnectionFactory.Connection.Value;
             _channel = connection.CreateModel();
-            _channel.QueueDeclare(queue: _queueName,
+        }
+
+        public void Publish<T>(string queueName, T message)
+        {
+            _channel.QueueDeclare(queue: queueName,
                                  durable: false,
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
-        }
 
-        public async Task RunInTransaction(Func<Task> task)
-        {
-            _channel.TxSelect();
-            try
-            {
-                await task();
-                _channel.TxCommit();
-                _logger.LogDebug("Broker tx commited");
-            }
-            catch
-            {
-                _logger.LogWarning("Broker tx is being rollbacked after exception");
-                _channel.TxRollback();
-                throw;
-            }
-        }
-
-        public void Publish(T message)
-        {
             var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
             IBasicProperties props = _channel.CreateBasicProperties();
@@ -67,49 +52,11 @@ namespace BookmarkManager.Infrastructure
             };
 
             _channel.BasicPublish(exchange: "",
-                                 routingKey: _queueName,
+                                 routingKey: queueName,
                                  basicProperties: props,
                                  body: body);
 
             _logger.LogInformation("Sent {message}", message);
-        }
-
-        public void Subscribe(Func<T, Action, Task> func)
-        {
-            _channel.BasicQos(0, 1, false);
-
-            var consumer = new EventingBasicConsumer(_channel);
-
-            consumer.Received += async (sender, ea) =>
-            {
-                Activity activity = StartActivity(ea);
-
-                var message = JsonSerializer.Deserialize<T>(
-                    Encoding.UTF8.GetString(ea.Body.ToArray()));
-
-                _logger.LogInformation("Received message from {queue}", _queueName);
-
-                void ackAction() => _channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
-
-                try
-                {
-                    await func(message, ackAction);
-                }
-                catch (Exception ex)
-                {
-                    _channel.BasicReject(deliveryTag: ea.DeliveryTag, requeue: false);
-                    _logger.LogError(ex, "Error processing message");
-                    throw;
-                }
-                finally
-                {
-                    activity.Stop();
-                }
-            };
-
-            _channel.BasicConsume(queue: _queueName,
-                                 autoAck: false,
-                                 consumer: consumer);
         }
 
         private Activity StartActivity(BasicDeliverEventArgs ea)
@@ -142,6 +89,47 @@ namespace BookmarkManager.Infrastructure
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public void Subscribe<T>(string queueName, Func<T, ConsumerDelegate> handler)
+        {
+            _channel.QueueDeclare(queue: queueName,
+                                 durable: false,
+                                 exclusive: false,
+                                 autoDelete: false,
+                                 arguments: null);
+            _channel.BasicQos(0, 1, false);
+
+            var consumer = new EventingBasicConsumer(_channel);
+
+            consumer.Received += async (sender, ea) =>
+            {
+                Activity activity = StartActivity(ea);
+
+                var payload = new Payload(ea.Body.ToArray(), _channel, ea);
+
+                _logger.LogInformation("Received message from {queue}", queueName);
+
+                try
+                {
+                    using var scope = _serviceProvider.CreateScope();
+                    var service = scope.ServiceProvider.GetRequiredService<T>();
+                    await handler(service)(payload);
+                }
+                catch (Exception ex)
+                {
+                    payload.NackAndDiscard();
+                    _logger.LogError(ex, "Error processing message");
+                }
+                finally
+                {
+                    activity.Stop();
+                }
+            };
+
+            _channel.BasicConsume(queue: queueName,
+                                 autoAck: false,
+                                 consumer: consumer);
         }
     }
 }
