@@ -1,7 +1,7 @@
-﻿using BookmarkManager.Dtos;
-using BookmarkManager.Infrastructure;
-using BookmarkManager.Models;
-using BookmarkManager.Services;
+﻿using BookmarkManager.Domain.Dtos;
+using BookmarkManager.Domain.Models;
+using BookmarkManager.Domain.Services;
+using BookmarkManager.Infrastructure.DbContexts;
 using BookmarkManager.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -41,7 +41,7 @@ namespace BookmarkManager.Controllers.V1
             return new PagedResult<Bookmark>(count, items);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         public async Task<ActionResult<Bookmark>> GetBookmark(Guid id)
         {
             var bookmark = await _context.Bookmarks.FindAsync(id);

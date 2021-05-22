@@ -1,5 +1,5 @@
-﻿using BookmarkManager.Dtos;
-using BookmarkManager.Models;
+﻿using BookmarkManager.Domain.Dtos;
+using BookmarkManager.Domain.Models;
 using BookmarkManager.Tests.Support;
 using System;
 using System.Net;

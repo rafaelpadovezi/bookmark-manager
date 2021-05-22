@@ -1,5 +1,4 @@
-﻿using BookmarkerManager;
-using BookmarkManager.Infrastructure;
+﻿using BookmarkManager.Infrastructure.DbContexts;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -34,7 +33,7 @@ namespace BookmarkManager.Tests.Support
                 .UseStartup<Startup>();
 
             var server = new TestServer(builder);
-            
+
             ServiceProvider = server.Host.Services;
             Client = server.CreateClient();
             DbContext = ServiceProvider.GetRequiredService<BookmarkManagerContext>();

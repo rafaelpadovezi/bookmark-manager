@@ -1,30 +1,10 @@
 ﻿using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
-using System;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace BookmarkManager.Infrastructure
+namespace BookmarkManager.Infrastructure.RabbitMQ
 {
-    public delegate Task ConsumerDelegate(Payload payload);
-
-    public interface IQueueConsumer : IDisposable
-    {
-        void Subscribe<T>(string queueName, Func<T, ConsumerDelegate> handler);
-    }
-
-    public interface IQueueProducer : IDisposable
-    {
-        void Publish<T>(string queueName, T message);
-    }
-
-    public static class PayloadExtensions
-    {
-        public static T Parse<T>(this Payload payload) =>
-            JsonSerializer.Deserialize<T>(Encoding.UTF8.GetString(payload.Body));
-    }
-
     public class Payload
     {
         public byte[] Body { get; }
@@ -52,5 +32,11 @@ namespace BookmarkManager.Infrastructure
         {
             _channel.BasicNack(_ea.DeliveryTag, false, false);
         }
+    }
+
+    public static class PayloadExtensions
+    {
+        public static T Parse<T>(this Payload payload) =>
+            JsonSerializer.Deserialize<T>(Encoding.UTF8.GetString(payload.Body));
     }
 }

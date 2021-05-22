@@ -1,32 +1,32 @@
-﻿using BookmarkManager.Infrastructure;
+﻿using BookmarkManager.Infrastructure.RabbitMQ;
 using Microsoft.Extensions.Hosting;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace BookmarkManager.Consumers
+namespace BookmarkManager.Infrastructure.Consumer
 {
     public class ConsumerService : IHostedService
     {
         private readonly IQueueConsumer _queueConsumer;
+        private readonly Action<IQueueConsumer> _startConsumer;
 
-        public ConsumerService(IQueueConsumer queueConsumer)
+        public ConsumerService(IQueueConsumer queueConsumer, Action<IQueueConsumer> startConsumer)
         {
             _queueConsumer = queueConsumer;
+            _startConsumer = startConsumer;
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _queueConsumer.Subscribe<BookmarkInsertedConsumer>(
-                "bookmark.inserted",
-                consumer => consumer.SaveBookmarDetailsAsync);
+            _startConsumer(_queueConsumer);
 
             return Task.CompletedTask;
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            return Task.CompletedTask;
         }
     }
 }

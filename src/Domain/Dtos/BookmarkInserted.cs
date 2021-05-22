@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace BookmarkManager.Dtos
+namespace BookmarkManager.Domain.Dtos
 {
     public class BookmarkInserted
     {

@@ -1,5 +1,5 @@
-﻿using BookmarkManager.Dtos;
-using BookmarkManager.Dtos.Validations;
+﻿using BookmarkManager.Domain.Dtos;
+using BookmarkManager.Domain.Dtos.Validations;
 using Xunit;
 
 namespace BookmarkManager.Tests.Unit

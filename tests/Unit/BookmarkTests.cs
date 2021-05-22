@@ -1,4 +1,4 @@
-﻿using BookmarkManager.Models;
+﻿using BookmarkManager.Domain.Models;
 using Xunit;
 
 namespace BookmarkManager.Tests.Unit

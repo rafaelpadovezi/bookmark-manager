@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace BookmarkManager.Services
+namespace BookmarkManager.Domain.Services
 {
     public class WebpageService : IWebpageService
     {
@@ -20,7 +20,7 @@ namespace BookmarkManager.Services
             _logger = logger;
         }
 
-        public async Task<(string Title, string Description, string ImageUrl)> GetPageInformation(string url)
+        public async Task<(string Title, string Description, string ImageUrl)> GetPageInformationAsync(string url)
         {
             if (url == null)
                 throw new ArgumentNullException(url);
@@ -32,7 +32,7 @@ namespace BookmarkManager.Services
             {
                 result = await client.GetAsync(url);
             }
-            catch(HttpRequestException ex)
+            catch (HttpRequestException ex)
             {
                 _logger.LogError(ex, "Request to {url} got HttpRequestException", url);
                 return (null, null, null);

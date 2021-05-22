@@ -2,19 +2,18 @@
 using RabbitMQ.Client;
 using System;
 
-namespace BookmarkManager.Infrastructure
+namespace BookmarkManager.Infrastructure.RabbitMQ
 {
     public class RabbitMQConnectionFactory : IDisposable
     {
-        private readonly ConnectionFactory _factory;
         private bool _disposedValue;
 
         // https://www.rabbitmq.com/dotnet-api-guide.html#connection-and-channel-lifspan
-        internal Lazy<IConnection> Connection => new(() => _factory.CreateConnection());
+        internal IConnection Connection { get; }
 
         public RabbitMQConnectionFactory(IOptions<RabbitMQOptions> options)
         {
-            _factory = new ConnectionFactory
+            var factory = new ConnectionFactory
             {
                 HostName = options.Value.HostName,
                 UserName = options.Value.UserName,
@@ -23,6 +22,7 @@ namespace BookmarkManager.Infrastructure
                 VirtualHost = options.Value.VHost,
                 AutomaticRecoveryEnabled = options.Value.AutomaticRecoveryEnabled
             };
+            Connection = factory.CreateConnection();
         }
 
         protected virtual void Dispose(bool disposing)
@@ -31,10 +31,7 @@ namespace BookmarkManager.Infrastructure
             {
                 if (disposing)
                 {
-                    if (Connection.IsValueCreated)
-                    {
-                        Connection.Value.Dispose();
-                    }
+                    Connection.Dispose();
                 }
 
                 _disposedValue = true;

@@ -1,4 +1,4 @@
-﻿using BookmarkManager.Services;
+﻿using BookmarkManager.Domain.Services;
 using System;
 using System.IO;
 using Xunit;

@@ -1,7 +1,7 @@
-﻿using BookmarkManager.Models;
+﻿using BookmarkManager.Domain.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace BookmarkManager.Infrastructure
+namespace BookmarkManager.Infrastructure.DbContexts
 {
     public class BookmarkManagerContext : DbContext
     {
@@ -11,5 +11,6 @@ namespace BookmarkManager.Infrastructure
         }
 
         public DbSet<Bookmark> Bookmarks { get; set; }
+        public DbSet<OutboxMessage> OutboxMessages { get; set; }
     }
 }

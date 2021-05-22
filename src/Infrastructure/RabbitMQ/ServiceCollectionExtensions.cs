@@ -1,17 +1,16 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BookmarkManager.Infrastructure.Queue
+namespace BookmarkManager.Infrastructure.RabbitMQ
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddRabbitMQConnection(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddRabbitMQConnection(
+            this IServiceCollection services, IConfiguration config)
         {
-            services
+            return services
                 .AddSingleton<RabbitMQConnectionFactory>()
                 .Configure<RabbitMQOptions>(config);
-
-            return services;
         }
     }
 }
