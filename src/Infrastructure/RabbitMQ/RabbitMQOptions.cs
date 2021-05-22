@@ -1,4 +1,4 @@
-﻿namespace BookmarkManager.Infrastructure
+﻿namespace BookmarkManager.Infrastructure.RabbitMQ
 {
     public class RabbitMQOptions
     {

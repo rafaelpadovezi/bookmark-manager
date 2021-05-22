@@ -1,8 +1,6 @@
-using BookmarkManager.Dtos;
-using BookmarkManager.Infrastructure;
-using BookmarkManager.Infrastructure.Queue;
-using BookmarkManager.Infrastructure.Queues;
-using BookmarkManager.Services;
+using BookmarkManager.Domain.Services;
+using BookmarkManager.Infrastructure.DbContexts;
+using BookmarkManager.Infrastructure.RabbitMQ;
 using BookmarkManager.Utils;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
@@ -13,7 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace BookmarkerManager
+namespace BookmarkManager
 {
     public class Startup
     {
@@ -38,7 +36,7 @@ namespace BookmarkerManager
                 .AddDbContext<BookmarkManagerContext>(options =>
                     options.UseSqlServer(Configuration.GetConnectionString("BookmarkManagerContext")))
                 .AddRabbitMQConnection(Configuration.GetSection("RabbitMQ"))
-                .AddScoped<IQueueProducer, QueueClient>();
+                .AddScoped<IQueueProducer, RabbitMQClient>();
             // application core
             services
                 .AddScoped<IBookmarkService, BookmarkService>();
@@ -71,7 +69,7 @@ namespace BookmarkerManager
         private static void EnsureDbCreated(IApplicationBuilder app)
         {
             using var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
-            using var context = serviceScope.ServiceProvider.GetService<BookmarkManagerContext>();
+            using var context = serviceScope.ServiceProvider.GetRequiredService<BookmarkManagerContext>();
             context.Database.EnsureCreated();
         }
     }

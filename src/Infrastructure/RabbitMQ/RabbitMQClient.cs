@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using BookmarkManager.Domain.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
@@ -9,31 +10,52 @@ using System.Text;
 using System.Text.Json;
 using Constants = BookmarkManager.Utils.Constants;
 
-namespace BookmarkManager.Infrastructure
+namespace BookmarkManager.Infrastructure.RabbitMQ
 {
-    public class QueueClient : IQueueConsumer, IQueueProducer
+    public class RabbitMQClient : IQueueConsumer, IQueueProducer
     {
-        private readonly string _queueName;
         private readonly IServiceProvider _serviceProvider;
         private readonly RabbitMQConnectionFactory _rabbitMQConnectionFactory;
-        private readonly ILogger<QueueClient> _logger;
+        private readonly ILogger<RabbitMQClient> _logger;
         private readonly IModel _channel;
         private bool _disposedValue;
 
-        public QueueClient(
+        public RabbitMQClient(
             IServiceProvider serviceProvider,
             RabbitMQConnectionFactory rabbitMQConnectionFactory,
-            ILogger<QueueClient> logger)
+            ILogger<RabbitMQClient> logger)
         {
             _serviceProvider = serviceProvider;
             _rabbitMQConnectionFactory = rabbitMQConnectionFactory;
             _logger = logger;
 
-            var connection = _rabbitMQConnectionFactory.Connection.Value;
+            var connection = _rabbitMQConnectionFactory.Connection;
+            // Closing and opening new channels per operation is usually
+            // unnecessary but can be appropriate.
+            // https://www.rabbitmq.com/dotnet-api-guide.html#connection-and-channel-lifspan
             _channel = connection.CreateModel();
         }
 
+        public void Publish(OutboxMessage outboxMessage)
+        {
+            var body = Encoding.UTF8.GetBytes(outboxMessage.Payload);
+
+            Publish(outboxMessage.QueueName, body, outboxMessage.ActivityId);
+
+            _logger.LogInformation("Sent {message}", outboxMessage.Type);
+            _logger.LogDebug("Message content: {content}", outboxMessage.Payload);
+        }
+
         public void Publish<T>(string queueName, T message)
+        {
+            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
+
+            Publish(queueName, body, Activity.Current?.Id);
+
+            _logger.LogInformation("Sent {message}", message);
+        }
+
+        private void Publish(string queueName, byte[] body, string activityId)
         {
             _channel.QueueDeclare(queue: queueName,
                                  durable: false,
@@ -41,27 +63,26 @@ namespace BookmarkManager.Infrastructure
                                  autoDelete: false,
                                  arguments: null);
 
-            var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
-
             IBasicProperties props = _channel.CreateBasicProperties();
             props.ContentType = "text/plain";
-            props.DeliveryMode = 2;
-            props.Headers = new Dictionary<string, object>
+            props.DeliveryMode = 2; // persistent
+            if (!string.IsNullOrEmpty(activityId))
             {
-                { "traceparent", Activity.Current.Id }
-            };
+                props.Headers = new Dictionary<string, object>
+                {
+                    { "traceparent", activityId }
+                };
+            }
 
             _channel.BasicPublish(exchange: "",
                                  routingKey: queueName,
                                  basicProperties: props,
                                  body: body);
-
-            _logger.LogInformation("Sent {message}", message);
         }
 
-        private Activity StartActivity(BasicDeliverEventArgs ea)
+        private static Activity StartActivity(string queueName, BasicDeliverEventArgs ea)
         {
-            var activity = new Activity($"{_queueName}.Consumer");
+            var activity = new Activity($"{queueName}.Consumer");
             if (ea.BasicProperties.Headers.TryGetValue(
                 Constants.TraceParentHeaderName, out var traceparent))
             {
@@ -70,25 +91,6 @@ namespace BookmarkManager.Infrastructure
             }
             activity.Start();
             return activity;
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    _channel?.Dispose();
-                }
-
-                _disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
 
         public void Subscribe<T>(string queueName, Func<T, ConsumerDelegate> handler)
@@ -104,7 +106,7 @@ namespace BookmarkManager.Infrastructure
 
             consumer.Received += async (sender, ea) =>
             {
-                Activity activity = StartActivity(ea);
+                Activity activity = StartActivity(queueName, ea);
 
                 var payload = new Payload(ea.Body.ToArray(), _channel, ea);
 
@@ -130,6 +132,25 @@ namespace BookmarkManager.Infrastructure
             _channel.BasicConsume(queue: queueName,
                                  autoAck: false,
                                  consumer: consumer);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _channel?.Dispose();
+                }
+
+                _disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

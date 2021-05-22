@@ -1,6 +1,7 @@
-﻿using BookmarkManager.Dtos;
-using BookmarkManager.Infrastructure;
-using BookmarkManager.Services;
+﻿using BookmarkManager.Domain.Dtos;
+using BookmarkManager.Domain.Services;
+using BookmarkManager.Infrastructure.DbContexts;
+using BookmarkManager.Infrastructure.RabbitMQ;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 
@@ -22,10 +23,10 @@ namespace BookmarkManager.Consumers
             _logger = logger;
         }
 
-        public async Task SaveBookmarDetailsAsync(Payload payload)
+        public async Task UpdateBookmarkDetailsAsync(Payload payload)
         {
             var message = payload.Parse<BookmarkInserted>();
-            var (title, description, imageUrl) = await _webpageService.GetPageInformation(message.Url);
+            var (title, description, imageUrl) = await _webpageService.GetPageInformationAsync(message.Url);
 
             var bookmark = await _context.Bookmarks.FindAsync(message.Id);
             if (bookmark is null)
@@ -36,13 +37,11 @@ namespace BookmarkManager.Consumers
             }
 
             bookmark.Update(title, description, imageUrl);
-            _context.Update(bookmark);
+            _context.Bookmarks.Update(bookmark);
 
-            using var transaction = await _context.Database.BeginTransactionAsync();
             await _context.SaveChangesAsync();
 
             payload.Ack();
-            await transaction.CommitAsync();
         }
     }
 }

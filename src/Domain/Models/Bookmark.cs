@@ -1,7 +1,7 @@
 ﻿using BookmarkManager.Utils;
 using System;
 
-namespace BookmarkManager.Models
+namespace BookmarkManager.Domain.Models
 {
     public class Bookmark : Entity
     {

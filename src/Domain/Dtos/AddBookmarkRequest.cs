@@ -1,4 +1,4 @@
-﻿namespace BookmarkManager.Dtos
+﻿namespace BookmarkManager.Domain.Dtos
 {
     public class AddBookmarkRequest
     {

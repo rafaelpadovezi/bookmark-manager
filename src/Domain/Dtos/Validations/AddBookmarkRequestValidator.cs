@@ -1,7 +1,7 @@
 ﻿using FluentValidation;
 using System;
 
-namespace BookmarkManager.Dtos.Validations
+namespace BookmarkManager.Domain.Dtos.Validations
 {
     public class AddBookmarkRequestValidator : AbstractValidator<AddBookmarkRequest>
     {
