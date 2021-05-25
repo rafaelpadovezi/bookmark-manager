@@ -6,12 +6,12 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
 {
     public delegate Task ConsumerDelegate(Payload payload);
 
-    public interface IQueueConsumer : IDisposable
+    public interface IQueueConsumer
     {
         void Subscribe<T>(string queueName, Func<T, ConsumerDelegate> handler);
     }
 
-    public interface IQueueProducer : IDisposable
+    public interface IQueueProducer
     {
         void Publish<T>(string queueName, T message);
         void Publish(OutboxMessage outboxMessage);

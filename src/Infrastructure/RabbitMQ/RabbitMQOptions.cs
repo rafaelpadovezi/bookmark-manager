@@ -1,6 +1,6 @@
 ﻿namespace BookmarkManager.Infrastructure.RabbitMQ
 {
-    public class RabbitMQOptions
+    public class RabbitMqOptions
     {
         public string HostName { get; set; }
         public string UserName { get; set; }

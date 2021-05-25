@@ -48,7 +48,7 @@ namespace BookmarkManager.Commands
                         .AddDbContext<BookmarkManagerContext>(options =>
                             options.UseSqlServer(Program.Configuration.GetConnectionString("BookmarkManagerContext")))
                         .AddRabbitMQConnection(Program.Configuration.GetSection("RabbitMQ"))
-                        .AddScoped<IQueueConsumer, RabbitMQClient>();
+                        .AddScoped<IQueueConsumer, RabbitMqClient>();
                 });
     }
 }

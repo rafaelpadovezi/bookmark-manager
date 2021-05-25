@@ -12,28 +12,20 @@ using Constants = BookmarkManager.Utils.Constants;
 
 namespace BookmarkManager.Infrastructure.RabbitMQ
 {
-    public class RabbitMQClient : IQueueConsumer, IQueueProducer
+    public class RabbitMqClient : IQueueConsumer, IQueueProducer
     {
         private readonly IServiceProvider _serviceProvider;
-        private readonly RabbitMQConnectionFactory _rabbitMQConnectionFactory;
-        private readonly ILogger<RabbitMQClient> _logger;
-        private readonly IModel _channel;
-        private bool _disposedValue;
+        private readonly RabbitMqConnection _rabbitMqConnection;
+        private readonly ILogger<RabbitMqClient> _logger;
 
-        public RabbitMQClient(
+        public RabbitMqClient(
             IServiceProvider serviceProvider,
-            RabbitMQConnectionFactory rabbitMQConnectionFactory,
-            ILogger<RabbitMQClient> logger)
+            RabbitMqConnection rabbitMqConnection,
+            ILogger<RabbitMqClient> logger)
         {
             _serviceProvider = serviceProvider;
-            _rabbitMQConnectionFactory = rabbitMQConnectionFactory;
+            _rabbitMqConnection = rabbitMqConnection;
             _logger = logger;
-
-            var connection = _rabbitMQConnectionFactory.Connection;
-            // Closing and opening new channels per operation is usually
-            // unnecessary but can be appropriate.
-            // https://www.rabbitmq.com/dotnet-api-guide.html#connection-and-channel-lifspan
-            _channel = connection.CreateModel();
         }
 
         public void Publish(OutboxMessage outboxMessage)
@@ -57,13 +49,14 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
 
         private void Publish(string queueName, byte[] body, string activityId)
         {
-            _channel.QueueDeclare(queue: queueName,
+            var channel = _rabbitMqConnection.Channel;
+            channel.QueueDeclare(queue: queueName,
                                  durable: false,
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
 
-            IBasicProperties props = _channel.CreateBasicProperties();
+            IBasicProperties props = channel.CreateBasicProperties();
             props.ContentType = "text/plain";
             props.DeliveryMode = 2; // persistent
             if (!string.IsNullOrEmpty(activityId))
@@ -74,7 +67,7 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
                 };
             }
 
-            _channel.BasicPublish(exchange: "",
+            channel.BasicPublish(exchange: "",
                                  routingKey: queueName,
                                  basicProperties: props,
                                  body: body);
@@ -95,20 +88,21 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
 
         public void Subscribe<T>(string queueName, Func<T, ConsumerDelegate> handler)
         {
-            _channel.QueueDeclare(queue: queueName,
+            var channel = _rabbitMqConnection.Channel;
+            channel.QueueDeclare(queue: queueName,
                                  durable: false,
                                  exclusive: false,
                                  autoDelete: false,
                                  arguments: null);
-            _channel.BasicQos(0, 1, false);
+            channel.BasicQos(0, 1, false);
 
-            var consumer = new EventingBasicConsumer(_channel);
+            var consumer = new EventingBasicConsumer(channel);
 
             consumer.Received += async (sender, ea) =>
             {
                 Activity activity = StartActivity(queueName, ea);
 
-                var payload = new Payload(ea.Body.ToArray(), _channel, ea);
+                var payload = new Payload(ea.Body.ToArray(), channel, ea);
 
                 _logger.LogInformation("Received message from {queue}", queueName);
 
@@ -129,28 +123,9 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
                 }
             };
 
-            _channel.BasicConsume(queue: queueName,
+            channel.BasicConsume(queue: queueName,
                                  autoAck: false,
                                  consumer: consumer);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!_disposedValue)
-            {
-                if (disposing)
-                {
-                    _channel?.Dispose();
-                }
-
-                _disposedValue = true;
-            }
-        }
-
-        public void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }
