@@ -1,17 +1,27 @@
 ﻿using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System;
+using System.Threading;
 
 namespace BookmarkManager.Infrastructure.RabbitMQ
 {
-    public class RabbitMQConnectionFactory : IDisposable
+    public class RabbitMqConnection : IDisposable
     {
         private bool _disposedValue;
 
         // https://www.rabbitmq.com/dotnet-api-guide.html#connection-and-channel-lifspan
-        internal IConnection Connection { get; }
+        private IConnection Connection { get; }
+        // Since channels are not thread safe but should be reused, the `ThreadLocal`
+        // guarantees the creation of one channel per thread. 
+        // From rabbitmq client docs:
+        //   For applications that use multiple threads/processes for processing,
+        //   it is very common to open a new channel per thread/process and not share
+        //   channels between them.
+        // https://www.rabbitmq.com/channels.html#basics
+        private ThreadLocal<IModel> ThreadSafeChannel { get; }
+        internal IModel Channel => ThreadSafeChannel.Value;
 
-        public RabbitMQConnectionFactory(IOptions<RabbitMQOptions> options)
+        public RabbitMqConnection(IOptions<RabbitMqOptions> options)
         {
             var factory = new ConnectionFactory
             {
@@ -23,6 +33,9 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
                 AutomaticRecoveryEnabled = options.Value.AutomaticRecoveryEnabled
             };
             Connection = factory.CreateConnection();
+            ThreadSafeChannel = new ThreadLocal<IModel>(
+                () => Connection.CreateModel(),
+                trackAllValues: true);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -31,7 +44,12 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
             {
                 if (disposing)
                 {
-                    Connection.Dispose();
+                    foreach (var channel in ThreadSafeChannel.Values)
+                    {
+                        channel.Close();
+                    }
+                    Connection.Close();
+                    // Should these objects be disposed?
                 }
 
                 _disposedValue = true;

@@ -9,8 +9,8 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
             this IServiceCollection services, IConfiguration config)
         {
             return services
-                .AddSingleton<RabbitMQConnectionFactory>()
-                .Configure<RabbitMQOptions>(config);
+                .AddSingleton<RabbitMqConnection>()
+                .Configure<RabbitMqOptions>(config);
         }
     }
 }

@@ -12,7 +12,7 @@ namespace BookmarkManager.Tests.Integration.Controllers.V1
     public class BookmarkControllerTests : WebhostFixture
     {
         [Fact(DisplayName = "Should return not found if bookmark does not exist")]
-        public async Task GetBookmarkAsync_ShoudReturnNotFoundIfBookmarDoesNotExit()
+        public async Task GetBookmarkAsync_ShouldReturnNotFoundIfBookmarkDoesNotExist()
         {
             // arrange
             var id = Guid.NewGuid();
@@ -25,7 +25,7 @@ namespace BookmarkManager.Tests.Integration.Controllers.V1
         }
 
         [Fact(DisplayName = "Should get bookmark")]
-        public async Task GetBookmarkAsync_ShoudGetBookmark()
+        public async Task GetBookmarkAsync_ShouldGetBookmark()
         {
             // arrange
             var id = Guid.Parse("0f899b5d-eb91-4b6a-8aa1-149fee29cc30");
@@ -44,7 +44,7 @@ namespace BookmarkManager.Tests.Integration.Controllers.V1
         }
 
         [Fact(DisplayName = "Should add bookmark")]
-        public async Task AddBookmarkAsync_ShoudAddBookmark()
+        public async Task AddBookmarkAsync_ShouldAddBookmark()
         {
             // arrange
             var request = new AddBookmarkRequest { Url = "http://www.google.com" };
