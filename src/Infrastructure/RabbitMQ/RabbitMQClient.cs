@@ -76,12 +76,18 @@ namespace BookmarkManager.Infrastructure.RabbitMQ
         private static Activity StartActivity(string queueName, BasicDeliverEventArgs ea)
         {
             var activity = new Activity($"{queueName}.Consumer");
-            if (ea.BasicProperties.Headers.TryGetValue(
-                Constants.TraceParentHeaderName, out var traceparent))
+
+            object traceparent = null;
+            var hasTraceparent =
+                ea.BasicProperties.Headers != null &&
+                ea.BasicProperties.Headers.TryGetValue(
+                    Constants.TraceParentHeaderName, out traceparent);
+            if (hasTraceparent && traceparent is byte[] bytes)
             {
-                var traceparentString = Encoding.UTF8.GetString(traceparent as byte[]);
+                var traceparentString = Encoding.UTF8.GetString(bytes);
                 activity.SetParentId(traceparentString);
             }
+
             activity.Start();
             return activity;
         }

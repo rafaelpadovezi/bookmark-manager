@@ -9,7 +9,7 @@ using Xunit;
 
 namespace BookmarkManager.Tests.Integration.Controllers.V1
 {
-    public class BookmarkControllerTests : WebhostFixture
+    public class BookmarkControllerTests : WebHostFixture
     {
         [Fact(DisplayName = "Should return not found if bookmark does not exist")]
         public async Task GetBookmarkAsync_ShouldReturnNotFoundIfBookmarkDoesNotExist()

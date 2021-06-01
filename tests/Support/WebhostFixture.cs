@@ -11,9 +11,9 @@ using System.Text.RegularExpressions;
 
 namespace BookmarkManager.Tests.Support
 {
-    public class WebhostFixture : IDisposable
+    public class WebHostFixture : IDisposable
     {
-        public WebhostFixture()
+        public WebHostFixture()
         {
             var builder = WebHost.CreateDefaultBuilder()
                 .UseEnvironment("Testing")

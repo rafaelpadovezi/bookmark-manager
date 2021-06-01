@@ -20,10 +20,10 @@ namespace BookmarkManager.Commands
     {
         public async ValueTask ExecuteAsync(IConsole console)
         {
-            await CreateConsumer(Array.Empty<string>()).Build().RunAsync();
+            await CreateConsumer(Array.Empty<string>(), Program.Configuration).Build().RunAsync();
         }
 
-        public static IHostBuilder CreateConsumer(string[] args) =>
+        public static IHostBuilder CreateConsumer(string[] args, IConfiguration configuration) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(builder =>
                 {
@@ -46,8 +46,8 @@ namespace BookmarkManager.Commands
                                 consumer => consumer.UpdateBookmarkDetailsAsync)
                         )
                         .AddDbContext<BookmarkManagerContext>(options =>
-                            options.UseSqlServer(Program.Configuration.GetConnectionString("BookmarkManagerContext")))
-                        .AddRabbitMQConnection(Program.Configuration.GetSection("RabbitMQ"))
+                            options.UseSqlServer(configuration.GetConnectionString("BookmarkManagerContext")))
+                        .AddRabbitMQConnection(configuration.GetSection("RabbitMQ"))
                         .AddScoped<IQueueConsumer, RabbitMqClient>();
                 });
     }

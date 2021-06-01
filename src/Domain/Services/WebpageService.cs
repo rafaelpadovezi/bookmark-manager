@@ -52,8 +52,7 @@ namespace BookmarkManager.Domain.Services
 
         public static (string Title, string Description, string ImageUrl) ParseHtml(string html)
         {
-            if (html == null)
-                throw new ArgumentNullException(html);
+            if (html is null) throw new ArgumentNullException(nameof(html));
 
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
