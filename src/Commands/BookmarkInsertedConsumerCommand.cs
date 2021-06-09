@@ -20,10 +20,10 @@ namespace BookmarkManager.Commands
     {
         public async ValueTask ExecuteAsync(IConsole console)
         {
-            await CreateConsumer(Array.Empty<string>(), Program.Configuration).Build().RunAsync();
+            await CreateConsumerHost(Array.Empty<string>(), Program.Configuration).Build().RunAsync();
         }
 
-        public static IHostBuilder CreateConsumer(string[] args, IConfiguration configuration) =>
+        public static IHostBuilder CreateConsumerHost(string[] args, IConfiguration configuration) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureLogging(builder =>
                 {

@@ -52,3 +52,4 @@ dotnet run -- bookmark-inserted-consumer
 - https://chrisrichardson.net/post/microservices/patterns/2020/10/16/idempotent-consumer.html
 - https://cap.dotnetcore.xyz/user-guide/en/cap/idempotence/
 - https://www.thereformedprogrammer.net/entity-framework-core-validating-data-and-catching-sql-errors/
+- https://github.com/willianantunes/tutorials/tree/master/2021/XX/ef-core-how-to-handle-migrations-in-production

@@ -33,11 +33,7 @@ namespace BookmarkManager.Tests.Integration.Consumers
             DbContext.Add(bookmark);
             await DbContext.SaveChangesAsync();
             var queueProducer = ServiceProvider.GetRequiredService<IQueueProducer>();
-            queueProducer.Publish("test-queue", new BookmarkInserted
-            {
-                Id = bookmark.Id,
-                Url = bookmark.Url
-            });
+            queueProducer.Publish("test-queue", new BookmarkInserted(bookmark.Id, bookmark.Url));
             var queueConsumer = ServiceProvider.GetRequiredService<IQueueConsumer>();
             var semaphore = new SemaphoreSlim(0, 1);
             // Act

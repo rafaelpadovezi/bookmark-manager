@@ -26,9 +26,9 @@ namespace BookmarkManager.Tests.Support
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
-            ;
+
             var appHost = BookmarkInsertedConsumerCommand
-                .CreateConsumer(Array.Empty<string>(), configuration)
+                .CreateConsumerHost(Array.Empty<string>(), configuration)
                 .ConfigureServices(services =>
                 {
                     services.AddScoped<IQueueProducer, RabbitMqClient>();

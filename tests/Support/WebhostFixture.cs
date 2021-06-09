@@ -1,4 +1,5 @@
-﻿using BookmarkManager.Infrastructure.DbContexts;
+﻿using BookmarkManager.Commands;
+using BookmarkManager.Infrastructure.DbContexts;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -30,7 +31,7 @@ namespace BookmarkManager.Tests.Support
                                 options.UseSqlServer(CreateConnectionStringWithUniqueDbName()),
                             ServiceLifetime.Singleton);
                 })
-                .UseStartup<Startup>();
+                .UseStartup<ApiCommand.Startup>();
 
             var server = new TestServer(builder);
 

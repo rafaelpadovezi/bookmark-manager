@@ -47,7 +47,7 @@ namespace BookmarkManager.Tests.Integration.Controllers.V1
         public async Task AddBookmarkAsync_ShouldAddBookmark()
         {
             // arrange
-            var request = new AddBookmarkRequest { Url = "http://www.google.com" };
+            var request = new AddBookmarkRequest("http://www.google.com");
 
             // act
             var result = await Client.PostAsJsonAsync($"api/v1/bookmarks", request);

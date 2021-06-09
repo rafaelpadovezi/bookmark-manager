@@ -27,11 +27,7 @@ namespace BookmarkManager.Domain.Services
 
             var outboxMessage = new OutboxMessage(
                 "bookmark.inserted",
-                new BookmarkInserted
-                {
-                    Url = bookmark.Url,
-                    Id = bookmark.Id
-                });
+                new BookmarkInserted(bookmark.Id, bookmark.Url));
 
             _context.OutboxMessages.Add(outboxMessage);
 
