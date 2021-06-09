@@ -12,5 +12,6 @@ namespace BookmarkManager.Infrastructure.DbContexts
 
         public DbSet<Bookmark> Bookmarks { get; set; }
         public DbSet<OutboxMessage> OutboxMessages { get; set; }
+        public DbSet<ProcessedMessage> ProcessedMessages { get; set; }
     }
 }
