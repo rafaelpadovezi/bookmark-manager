@@ -14,4 +14,4 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Run tests
-      run: docker compose run --abort-on-container-exit tests
+      run: docker compose up tests --exit-code-from tests
