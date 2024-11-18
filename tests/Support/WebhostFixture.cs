@@ -9,28 +9,17 @@ using System;
 using System.Linq;
 using System.Net.Http;
 using System.Text.RegularExpressions;
+using Xunit;
 
 namespace BookmarkManager.Tests.Support
 {
+    [Collection("Database collection")]
     public class WebHostFixture : IDisposable
     {
         public WebHostFixture()
         {
             var builder = WebHost.CreateDefaultBuilder()
                 .UseEnvironment("Testing")
-                .ConfigureTestServices(services =>
-                {
-                    var descriptors = services
-                        .Where(x => x.ServiceType == typeof(BookmarkManagerContext)
-                                 || x.ServiceType == typeof(DbContextOptions<BookmarkManagerContext>));
-                    foreach (var descriptor in descriptors.ToList())
-                        services.Remove(descriptor);
-                    services
-                        .AddDbContext<BookmarkManagerContext>(
-                            options =>
-                                options.UseSqlServer(CreateConnectionStringWithUniqueDbName()),
-                            ServiceLifetime.Singleton);
-                })
                 .UseStartup<ApiCommand.Startup>();
 
             var server = new TestServer(builder);
@@ -50,13 +39,5 @@ namespace BookmarkManager.Tests.Support
         {
             DbContext.Database.EnsureDeleted();
         }
-
-        private static string CreateConnectionStringWithUniqueDbName()
-        {
-            return "Server=localhost;Initial Catalog=" +
-                Regex.Replace(Convert.ToBase64String(Guid.NewGuid().ToByteArray()), "[/+=]", "") +
-                ";User ID=sa;Password=Password1;";
-        }
-
     }
 }

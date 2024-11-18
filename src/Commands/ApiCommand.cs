@@ -69,11 +69,6 @@ namespace BookmarkManager.Commands
 
             public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
             {
-                if (env.IsDevelopment())
-                {
-                    app.UseDeveloperExceptionPage();
-                }
-
                 app.UseRouting();
 
                 app.UseEndpoints(endpoints =>
@@ -86,8 +81,8 @@ namespace BookmarkManager.Commands
                     endpoints.MapControllers();
                 });
 
-                if (env.EnvironmentName != "Testing")
-                    EnsureDbCreated(app);
+                // if (env.EnvironmentName != "Testing")
+                //     EnsureDbCreated(app);
             }
 
             private static void EnsureDbCreated(IApplicationBuilder app)

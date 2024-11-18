@@ -10,9 +10,11 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Threading;
+using Xunit;
 
 namespace BookmarkManager.Tests.Support
 {
+    [Collection("Database collection")]
     public class ConsumerFixture<T> : IDisposable where T : IHostedService
     {
         public IServiceProvider ServiceProvider { get; }
