@@ -29,7 +29,7 @@ services:
       
   tests:
     working_dir: "/app"
-    image: mcr.microsoft.com/dotnet/sdk:5.0
+    image: mcr.microsoft.com/dotnet/sdk:6.0
     environment:
       ConnectionStrings__BookmarkManagerContext: "Server=sqlserver;Initial Catalog=BookmarkManager;User ID=sa;Password=Password1;TrustServerCertificate=True"
       RabbitMQ__HostName: "rabbitmq"
