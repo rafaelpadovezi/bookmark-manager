@@ -1,0 +1,21 @@
+name: Verify Status Checks
+
+on:
+  check_run:
+    types: [completed, created, rerequested, requested_action]
+
+jobs:
+  check-status:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Verify status checks
+        run: |
+          if [[ "$(jq -r '.check_suite.conclusion' $GITHUB_EVENT_PATH)" != "success" ]]; then
+            echo "Some status checks failed."
+            exit 1
+          fi
+          echo "All status checks passed."
